@@ -69,7 +69,7 @@ namespace AutoLotConnectedLayer
         }
 
         public void UpdateCarPetName(int CarId, string PetName) {
-            string sql = String.Format("update Inventory set PetName = {0} where CarId = {1}", PetName, CarId);
+            string sql = String.Format("update Inventory set PetName = '{0}' where CarId = {1}", PetName, CarId);
             using (SqlCommand sqlcmd = new SqlCommand(sql, sqlCn)) {
                 sqlcmd.ExecuteNonQuery();
             }
@@ -78,7 +78,7 @@ namespace AutoLotConnectedLayer
         public List<NewCar> GetAllInventoryAsList() {
             List<NewCar> Cars = new List<NewCar>();
             string sql = String.Format("select * from Inventory i with(nolock)");
-            using (SqlCommand sqlcmd = new SqlCommand()) {
+            using (SqlCommand sqlcmd = new SqlCommand(sql, sqlCn)) {
                 SqlDataReader sdr = sqlcmd.ExecuteReader();
                 while(sdr.Read()) {
                     Cars.Add(new NewCar() {
@@ -96,8 +96,10 @@ namespace AutoLotConnectedLayer
         public string LookUpPetName(int CarId) {
             string carPetName = string.Empty;
             using (SqlCommand sc = new SqlCommand("GetPetName", sqlCn)) {
+                sc.CommandType = CommandType.StoredProcedure;
+
                 SqlParameter sp = new SqlParameter();
-                sp.ParameterName = "@CarId";
+                sp.ParameterName = "@CarID";
                 sp.SqlDbType = SqlDbType.Int;
                 sp.Value = CarId;
                 sp.Direction = ParameterDirection.Input;
