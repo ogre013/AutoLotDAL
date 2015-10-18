@@ -119,5 +119,71 @@ namespace AutoLotConnectedLayer
 
             return carPetName;
         }
+
+        public void ProcessCreditRisk(bool throwEx, int custID) {
+            string fName = string.Empty;
+            string lName = string.Empty;
+
+            SqlCommand cmdSelect = new SqlCommand("SELECT * FROM Customers AS c WITH(NOLOCK) WHERE c.CustID = @CustID", sqlCn);
+            cmdSelect.Parameters.Add("@CustID", SqlDbType.Int);
+            cmdSelect.Parameters ["@CustID"].Value = custID;
+
+            using (SqlDataReader dr = cmdSelect.ExecuteReader()) {
+                if (dr.HasRows) {
+                    dr.Read();
+                    fName = (string)dr ["FirstName"];
+                    lName = (string)dr ["Lastname"];
+                }
+                else
+                    return;
+            }
+
+            SqlCommand cmdRemove = new SqlCommand(
+                "DELETE FROM Customers WHERE CustID = @CustID", sqlCn);
+            cmdRemove.Parameters.Add("@CustID", SqlDbType.Int);
+            cmdRemove.Parameters ["@CustID"].Value = custID;
+
+            SqlCommand cmdInsert = new SqlCommand(
+                @"
+                    INSERT INTO CreditRisks
+                    (
+                        CustID,
+	                    FirstName,
+	                    LastName
+                    )
+                    VALUES
+                    (
+                        @CustID,
+                        @FirstName,
+                        @LastName
+                    )"
+            , sqlCn);
+
+            cmdInsert.Parameters.Add("@CustID", SqlDbType.Int);
+            cmdInsert.Parameters ["@CustID"].Value = custID;
+            cmdInsert.Parameters.Add("@FirstName", SqlDbType.VarChar);
+            cmdInsert.Parameters ["@FirstName"].Value = fName;
+            cmdInsert.Parameters.Add("@LastName", SqlDbType.VarChar);
+            cmdInsert.Parameters ["@LastName"].Value = lName;
+
+            SqlTransaction tx = null;
+            try {
+                tx = sqlCn.BeginTransaction();
+
+                cmdInsert.Transaction = tx;
+                cmdRemove.Transaction = tx;
+
+                cmdInsert.ExecuteNonQuery();
+                cmdRemove.ExecuteNonQuery();
+
+                if (throwEx)
+                    throw new Exception("Sorry! Database error! Tx failed.....");
+                tx.Commit();
+            }
+            catch(Exception ex) {
+                Console.WriteLine(ex.Message);
+                tx.Rollback();
+            }
+        }
     }
 }
