@@ -41,6 +41,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AutoLotConnectedLayer.cs" />
+    <Compile Include="InventoryDALDisLayer.cs" />
     <Compile Include="NewCar.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
